@@ -314,21 +314,16 @@ public final class XAttrUtil {
             do {
                 b = byteBuffer.get();
             } while (b != 0);
-            final int nulPos = byteBuffer.position();
+
+            // Duplicate buffer with limit at end of name.
+            final ByteBuffer nameBuffer = byteBuffer.duplicate();
+            nameBuffer.limit(byteBuffer.position() - 1);
 
             // Reset to start of name.
-            byteBuffer.reset();
-
-            // Read name into bytes array.
-            final int nameLen = nulPos - byteBuffer.position() - 1;
-            byte[] nameBytes = new byte[nameLen];
-            byteBuffer.get(nameBytes, 0, nameLen);
-
-            // Move past terminating NUL character.
-            byteBuffer.get();
+            nameBuffer.reset();
 
             // Convert bytes of the name to String.
-            String name = charset.decode(ByteBuffer.wrap(nameBytes)).toString();
+            String name = charset.decode(nameBuffer).toString();
             attributesList.add(name);
         }
         return attributesList;
