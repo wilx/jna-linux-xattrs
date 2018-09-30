@@ -19,8 +19,7 @@ public final class XAttrUtil {
     private XAttrUtil() {
     }
 
-    public static void setXAttr(String path, String name, String value)
-        throws IOException {
+    public static void setXAttr(String path, String name, String value) throws IOException {
         setXAttr(path, name, value, UTF_8);
     }
 
@@ -84,11 +83,18 @@ public final class XAttrUtil {
     }
 
     public static String getXAttr(String path, String name, String encoding) throws IOException {
-        final byte[] bytes = getXAttrBytes(path, name);
-        return Charset.forName(encoding).decode(ByteBuffer.wrap(bytes)).toString();
+        Memory valueMem = getXAttrAsMemory(path, name);
+        return Charset.forName(encoding)
+            .decode(valueMem.getByteBuffer(0, valueMem.size()))
+            .toString();
     }
 
     public static byte[] getXAttrBytes(String path, String name) throws IOException {
+        Memory valueMem = getXAttrAsMemory(path, name);
+        return memoryToBytes(valueMem, (int) valueMem.size());
+    }
+
+    public static Memory getXAttrAsMemory(String path, String name) throws IOException {
         ssize_t retval;
         Memory valueMem;
         int eno;
@@ -108,7 +114,7 @@ public final class XAttrUtil {
             }
         } while (retval.longValue() < 0 && eno == XAttr.ERANGE);
 
-        return memoryToBytes(valueMem, (int) retval.longValue());
+        return valueMem;
     }
 
 
@@ -117,11 +123,18 @@ public final class XAttrUtil {
     }
 
     public static String lGetXAttr(String path, String name, String encoding) throws IOException {
-        final byte[] bytes = lGetXAttrBytes(path, name);
-        return Charset.forName(encoding).decode(ByteBuffer.wrap(bytes)).toString();
+        Memory valueMem = lGetXAttrAsMemory(path, name);
+        return Charset.forName(encoding)
+            .decode(valueMem.getByteBuffer(0, valueMem.size()))
+            .toString();
     }
 
     public static byte[] lGetXAttrBytes(String path, String name) throws IOException {
+        Memory valueMem = lGetXAttrAsMemory(path, name);
+        return memoryToBytes(valueMem, (int) valueMem.size());
+    }
+
+    public static Memory lGetXAttrAsMemory(String path, String name) throws IOException {
         ssize_t retval;
         Memory valueMem;
         int eno;
@@ -141,7 +154,7 @@ public final class XAttrUtil {
             }
         } while (retval.longValue() < 0 && eno == XAttr.ERANGE);
 
-        return memoryToBytes(valueMem, (int) retval.longValue());
+        return valueMem;
     }
 
 
@@ -150,11 +163,18 @@ public final class XAttrUtil {
     }
 
     public static String fGetXAttr(int fd, String name, String encoding) throws IOException {
-        final byte[] bytes = fGetXAttrBytes(fd, name);
-        return Charset.forName(encoding).decode(ByteBuffer.wrap(bytes)).toString();
+        Memory valueMem = fGetXAttrAsMemory(fd, name);
+        return Charset.forName(encoding)
+            .decode(valueMem.getByteBuffer(0, valueMem.size()))
+            .toString();
     }
 
     public static byte[] fGetXAttrBytes(int fd, String name) throws IOException {
+        Memory valueMem = fGetXAttrAsMemory(fd, name);
+        return memoryToBytes(valueMem, (int) valueMem.size());
+    }
+
+    public static Memory fGetXAttrAsMemory(int fd, String name) throws IOException {
         ssize_t retval;
         Memory valueMem;
         int eno;
@@ -174,7 +194,7 @@ public final class XAttrUtil {
             }
         } while (retval.longValue() < 0 && eno == XAttr.ERANGE);
 
-        return memoryToBytes(valueMem, (int) retval.longValue());
+        return valueMem;
     }
 
 
