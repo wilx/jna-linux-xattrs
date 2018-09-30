@@ -222,8 +222,7 @@ public final class XAttrUtil {
             }
         } while (retval.longValue() < 0 && eno == XAttr.ERANGE);
 
-        final ByteBuffer byteBuffer = listMem.getByteBuffer(0, retval.longValue());
-        return splitBufferToStrings(byteBuffer, encoding);
+        return splitBufferToStrings(listMem, encoding);
     }
 
 
@@ -251,8 +250,7 @@ public final class XAttrUtil {
             }
         } while (retval.longValue() < 0 && eno == XAttr.ERANGE);
 
-        final ByteBuffer byteBuffer = listMem.getByteBuffer(0, retval.longValue());
-        return splitBufferToStrings(byteBuffer, encoding);
+        return splitBufferToStrings(listMem, encoding);
     }
 
 
@@ -280,8 +278,7 @@ public final class XAttrUtil {
             }
         } while (retval.longValue() < 0 && eno == XAttr.ERANGE);
 
-        final ByteBuffer byteBuffer = listMem.getByteBuffer(0, retval.longValue());
-        return splitBufferToStrings(byteBuffer, encoding);
+        return splitBufferToStrings(listMem, encoding);
     }
 
 
@@ -322,29 +319,26 @@ public final class XAttrUtil {
         return valueMem;
     }
 
-    private static Collection<String> splitBufferToStrings(ByteBuffer byteBuffer, String encoding) {
+    private static Collection<String> splitBufferToStrings(Memory valueMem, String encoding)
+        throws IOException {
         final Charset charset = Charset.forName(encoding);
         final Set<String> attributesList = new LinkedHashSet<String>(1);
-        while (byteBuffer.position() < byteBuffer.limit()) {
-            // Remember position.
-            byteBuffer.mark();
-
-            // Find NUL.
-            byte b;
-            do {
-                b = byteBuffer.get();
-            } while (b != 0);
+        long offset = 0;
+        while (offset != valueMem.size()) {
+            long nulOffset = valueMem.indexOf(offset, (byte) 0) + offset;
+            if (nulOffset == -1) {
+                throw new IOException("Expected NUL character not found.");
+            }
 
             // Duplicate buffer with limit at end of name.
-            final ByteBuffer nameBuffer = byteBuffer.duplicate();
-            nameBuffer.limit(byteBuffer.position() - 1);
-
-            // Reset to start of name.
-            nameBuffer.reset();
+            final ByteBuffer nameBuffer = valueMem.getByteBuffer(offset, nulOffset - offset);
 
             // Convert bytes of the name to String.
             String name = charset.decode(nameBuffer).toString();
             attributesList.add(name);
+
+            // Move past NUL.
+            offset = nulOffset + 1;
         }
         return attributesList;
     }
