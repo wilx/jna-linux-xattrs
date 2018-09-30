@@ -325,20 +325,21 @@ public final class XAttrUtil {
         final Set<String> attributesList = new LinkedHashSet<String>(1);
         long offset = 0;
         while (offset != valueMem.size()) {
-            long nulOffset = valueMem.indexOf(offset, (byte) 0) + offset;
+            // Find terminating NUL character.
+            long nulOffset = valueMem.indexOf(offset, (byte) 0);
             if (nulOffset == -1) {
                 throw new IOException("Expected NUL character not found.");
             }
 
             // Duplicate buffer with limit at end of name.
-            final ByteBuffer nameBuffer = valueMem.getByteBuffer(offset, nulOffset - offset);
+            final ByteBuffer nameBuffer = valueMem.getByteBuffer(offset, nulOffset);
 
             // Convert bytes of the name to String.
-            String name = charset.decode(nameBuffer).toString();
+            final String name = charset.decode(nameBuffer).toString();
             attributesList.add(name);
 
             // Move past NUL.
-            offset = nulOffset + 1;
+            offset += nulOffset + 1;
         }
         return attributesList;
     }
